@@ -318,8 +318,8 @@ docs/                   Example report
 
 | Tool | Version | Notes |
 | --- | --- | --- |
-| Node.js | 20+ | Tested with 22 LTS |
-| pnpm | 10+ | Run `corepack enable` (corepack ships with Node) |
+| Node.js | 20.11+ | Tested with 22 LTS; CI runs 20, 22 and 24 |
+| pnpm | 12 | Run `corepack enable` (corepack ships with Node); the version is pinned in `package.json` |
 | Ollama | latest | Needed for the LLM steps; the scan works without it |
 | Cluster access | any | A working kubeconfig (minikube, kind, or a real cluster) |
 | Docker | any | Only for the demo cluster; kind itself is downloaded automatically |
@@ -683,10 +683,18 @@ against a fake cluster, and drive the investigate loop with a scripted fake LLM.
 [`test/rules.test.ts`](test/rules.test.ts) is a good place to see what each rule catches.
 The end-to-end tests run the real scan and CLI against the demo cluster.
 
+CI ([`.github/workflows/ci.yml`](.github/workflows/ci.yml)) runs the type check, format
+check, unit tests and build on every push and pull request, the same workflow as
+[iac-pr-reviewer](https://github.com/meirakrish/iac-pr-reviewer) and
+[llm-kit](https://github.com/meirakrish/llm-kit). The end-to-end tests need a kind cluster
+and run locally.
+
 ### Troubleshooting
 
-- **`Ignored build scripts: esbuild`:** pnpm 10+ blocks dependency install scripts by
-  default. This repo allows `esbuild` in `pnpm-workspace.yaml`. Run `pnpm install` again.
+- **`Ignored build scripts` or `ERR_PNPM_GIT_DEP_PREPARE_NOT_ALLOWED`:** pnpm blocks
+  dependency build scripts by default. `pnpm-workspace.yaml` allows `esbuild` and the pinned
+  llm-kit commit; if you change the llm-kit version in `package.json`, update its entry there
+  too. Then run `pnpm install` again.
 - **`cannot reach Ollama` in the report:** start Ollama (`ollama serve`, or the system
   service), or set `OLLAMA_HOST`. The rule-based report is still produced.
 - **`kind create cluster` fails with `connection refused` on port 6443:** the API server
@@ -696,3 +704,15 @@ The end-to-end tests run the real scan and CLI against the demo cluster.
   run `pnpm demo:up` again.
 - **`kubectl` says `current-context is not set` after `minikube stop`:** stopping minikube
   removes its context from `~/.kube/config`. `minikube start` restores it.
+
+## Related projects
+
+Part of a small set of LLM-assisted DevOps tools that share one LLM layer, one severity scale (`low` < `medium` < `high` < `critical`) and the same `LLM_*` settings:
+
+- [k8s-devops-agent](https://github.com/meirakrish/k8s-devops-agent): read-only Kubernetes health checks with LLM triage and root-cause investigation
+- [iac-pr-reviewer](https://github.com/meirakrish/iac-pr-reviewer): risk review of Terraform plans before they are applied
+- [llm-kit](https://github.com/meirakrish/llm-kit): the shared LLM layer (providers, structured output, retries, token metering, Ollama safeguards)
+
+## License
+
+MIT, see [LICENSE](LICENSE).

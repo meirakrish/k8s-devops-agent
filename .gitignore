@@ -1,8 +1,11 @@
 node_modules/
 dist/
+coverage/
 .env
-reports/
 *.log
-.demo/
 # Git worktrees of Claude Code background agents
 .claude/worktrees/
+
+# Project
+reports/
+.demo/
