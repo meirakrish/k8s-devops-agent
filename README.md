@@ -50,7 +50,7 @@ $ pnpm demo:check --verbose
 ## Quickstart (about 5 minutes)
 
 This runs the agent against a throwaway demo cluster, so you can see it work before
-pointing it at a real cluster. You need Node.js 20+, Docker and Ollama (see
+pointing it at a real cluster. You need Node.js 22.19+, Docker and Ollama (see
 [Setup](#setup) for installing them).
 
 ```bash
@@ -318,7 +318,7 @@ docs/                   Example report
 
 | Tool | Version | Notes |
 | --- | --- | --- |
-| Node.js | 20.11+ | Tested with 22 LTS; CI runs 20, 22 and 24 |
+| Node.js | 22.19+ | Required by `@kubernetes/client-node` 2 (undici 8); CI runs 22 and 24 |
 | pnpm | 12 | Run `corepack enable` (corepack ships with Node); the version is pinned in `package.json` |
 | Ollama | latest | Needed for the LLM steps; the scan works without it |
 | Cluster access | any | A working kubeconfig (minikube, kind, or a real cluster) |
