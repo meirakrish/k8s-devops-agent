@@ -691,10 +691,8 @@ and run locally.
 
 ### Troubleshooting
 
-- **`Ignored build scripts` or `ERR_PNPM_GIT_DEP_PREPARE_NOT_ALLOWED`:** pnpm blocks
-  dependency build scripts by default. `pnpm-workspace.yaml` allows `esbuild` and the pinned
-  llm-kit commit; if you change the llm-kit version in `package.json`, update its entry there
-  too. Then run `pnpm install` again.
+- **`Ignored build scripts: esbuild`:** pnpm blocks dependency build scripts by default.
+  This repo allows `esbuild` in `pnpm-workspace.yaml`. Run `pnpm install` again.
 - **`cannot reach Ollama` in the report:** start Ollama (`ollama serve`, or the system
   service), or set `OLLAMA_HOST`. The rule-based report is still produced.
 - **`kind create cluster` fails with `connection refused` on port 6443:** the API server
