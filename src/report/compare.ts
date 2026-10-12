@@ -1,6 +1,6 @@
 import { readFile } from "node:fs/promises";
 import { z } from "zod";
-import { errorMessage } from "../errors.js";
+import { errorMessage } from "@meirakrish/llm-kit";
 import { compareSeverity } from "../scan/severity.js";
 import type { ClusterOverview, Issue, Severity } from "../scan/types.js";
 

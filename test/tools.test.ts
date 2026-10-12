@@ -2,7 +2,7 @@ import type { V1Pod } from "@kubernetes/client-node";
 import { describe, expect, it } from "vitest";
 import type { K8sClients } from "../src/k8s/client.js";
 import { createK8sTools } from "../src/tools/k8s-tools.js";
-import { truncateMiddle } from "../src/tools/truncate.js";
+import { truncateMiddle } from "@meirakrish/llm-kit";
 
 describe("truncateMiddle", () => {
   it("leaves short text alone", () => {

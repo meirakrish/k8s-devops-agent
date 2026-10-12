@@ -1,6 +1,5 @@
 import type { Finding, FixFlag } from "../agent/types.js";
-import { addUsage, emptyUsage, type LlmUsage } from "../llm/model.js";
-import type { OllamaStatus } from "../llm/ollama.js";
+import { addUsage, emptyUsage, type LlmUsage, type OllamaStatus } from "@meirakrish/llm-kit";
 import { formatBytes } from "../scan/quantity.js";
 import type { ClusterOverview, Issue, Severity } from "../scan/types.js";
 import { changeCounts, type Comparison, type IssueChange } from "./compare.js";
@@ -112,7 +111,7 @@ function resourceName(i: Issue): string {
   return `${i.resource.kind} ${i.resource.namespace ? `${i.resource.namespace}/` : ""}${i.resource.name}`;
 }
 
-/** A prompt using this share of NUM_CTX is close to being truncated. */
+/** A prompt using this share of LLM_NUM_CTX is close to being truncated. */
 const CONTEXT_WARNING_RATIO = 0.8;
 
 const n = (v: number) => v.toLocaleString("en-US");
@@ -125,7 +124,7 @@ function tokens(usage: LlmUsage, numCtx: number | undefined): string {
 /** Set when a prompt came close to not fitting in the context window. */
 function contextWarning(usage: LlmUsage | undefined, numCtx: number | undefined): string | undefined {
   if (!usage || !numCtx || usage.peakPromptTokens < numCtx * CONTEXT_WARNING_RATIO) return undefined;
-  return `the largest prompt used ${Math.round((usage.peakPromptTokens / numCtx) * 100)}% of \`NUM_CTX\`; a longer one would not fit. Consider raising \`NUM_CTX\` or lowering \`TOOL_OUTPUT_MAX_CHARS\`.`;
+  return `the largest prompt used ${Math.round((usage.peakPromptTokens / numCtx) * 100)}% of \`LLM_NUM_CTX\`; a longer one would not fit. Consider raising \`LLM_NUM_CTX\` or lowering \`TOOL_OUTPUT_MAX_CHARS\`.`;
 }
 
 /** A problem is new or escalated if any of its issues is; "new" wins. */

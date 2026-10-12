@@ -3,10 +3,9 @@ import { dirname, resolve } from "node:path";
 import { parseArgs } from "node:util";
 import { FAIL_ON, type FailOn, parseContexts, pathForContext, shouldFail } from "./cli-support.js";
 import { type Config, loadConfig } from "./config.js";
-import { errorMessage } from "./errors.js";
 import { buildGraph } from "./graph.js";
 import { createK8sClients } from "./k8s/client.js";
-import { createOllamaLlm, type LlmClient } from "./llm/model.js";
+import { createLlmClient, errorMessage, type LlmClient } from "@meirakrish/llm-kit";
 import { loadPreviousReport } from "./report/compare.js";
 import type { JsonReport } from "./report/json.js";
 
@@ -60,7 +59,9 @@ interface ContextResult {
 /** Runs the health check for one context and saves its output files. */
 async function checkContext(context: string | undefined, opts: Options): Promise<ContextResult> {
   const k8s = createK8sClients(opts.config.kubeconfigPath, context);
-  opts.log?.(`using kube context "${k8s.context}", model "${opts.config.model}" at ${opts.config.ollamaUrl}`);
+  opts.log?.(
+    `using kube context "${k8s.context}", model "${opts.config.llm.model}" (${opts.config.llm.provider}${opts.config.llm.provider === "ollama" ? ` at ${opts.config.llm.ollamaHost}` : ""})`,
+  );
   const path = (template: string) => resolve(pathForContext(template, k8s.context, opts.multipleContexts));
 
   // Read before running: --compare and --output may name the same file.
@@ -132,7 +133,9 @@ async function main(): Promise<number> {
     namespace: values.namespace,
     outputs: values.output ?? [],
     compare: values.compare,
-    llm: values["no-llm"] ? undefined : createOllamaLlm(config),
+    llm: values["no-llm"]
+      ? undefined
+      : await createLlmClient(config.llm, { overflowHint: "raise LLM_NUM_CTX or lower TOOL_OUTPUT_MAX_CHARS" }),
     log: values.verbose
       ? (msg: string) => console.error(`[${new Date().toISOString().slice(11, 19)}] ${msg}`)
       : undefined,

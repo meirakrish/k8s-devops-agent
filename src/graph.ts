@@ -4,8 +4,7 @@ import { triage } from "./agent/triage.js";
 import type { Finding, Problem } from "./agent/types.js";
 import type { Config } from "./config.js";
 import type { K8sClients } from "./k8s/client.js";
-import type { LlmClient, LlmUsage } from "./llm/model.js";
-import { checkOllama, type OllamaStatus } from "./llm/ollama.js";
+import { checkOllama, type LlmClient, type LlmUsage, type OllamaStatus } from "@meirakrish/llm-kit";
 import { compareWithPrevious, type PreviousReport } from "./report/compare.js";
 import { buildJsonReport, type JsonReport } from "./report/json.js";
 import { renderMarkdownReport, type ReportInput } from "./report/markdown.js";
@@ -86,7 +85,12 @@ export function buildGraph(deps: GraphDeps) {
   }
 
   async function checkLlm(): Promise<Partial<HealthCheckStateType>> {
-    const ollama = await checkOllama(deps.config.ollamaUrl, deps.config.model);
+    const { provider, model, ollamaHost } = deps.config.llm;
+    // Hosted providers have no cheap preflight; a failed call falls back to the rule-based report.
+    const ollama: OllamaStatus =
+      provider === "ollama"
+        ? await checkOllama(ollamaHost, model)
+        : { url: `${provider} API`, model, reachable: true, modelAvailable: true, installedModels: [] };
     log(
       `checkLlm: ${ollama.reachable ? "reachable" : "unreachable"}` +
         (ollama.reachable ? `, model ${ollama.modelAvailable ? "available" : "missing"}` : ""),
@@ -101,13 +105,13 @@ export function buildGraph(deps: GraphDeps) {
     };
     if (!deps.llm) return skip("disabled with --no-llm");
     if (!state.ollama.reachable) return skip(state.ollama.error ?? "Ollama unreachable");
-    if (!state.ollama.modelAvailable) return skip(`model ${deps.config.model} is not pulled`);
+    if (!state.ollama.modelAvailable) return skip(`model ${deps.config.llm.model} is not pulled`);
     if (state.issues.length === 0) return skip("no issues found");
 
     const started = Date.now();
-    deps.llm.takeUsage?.();
+    deps.llm.takeUsage();
     const problems = await triage(deps.llm, state.overview, state.issues, deps.config.maxProblems, log);
-    const triageUsage = deps.llm.takeUsage?.();
+    const triageUsage = deps.llm.takeUsage();
     log(`triage: ${problems.length} problem(s) to investigate (${Date.now() - started}ms${tokensLog(triageUsage)})`);
     for (const p of problems) {
       log(`  - ${p.primary.id}${p.related.length > 0 ? ` (+${p.related.length} related)` : ""}`);
@@ -154,7 +158,8 @@ export function buildGraph(deps: GraphDeps) {
       ollama: state.ollama,
       findings: state.findings,
       triageUsage: state.triageUsage,
-      numCtx: deps.config.numCtx,
+      // The context-window warning only applies to Ollama; hosted contexts are far larger.
+      numCtx: deps.config.llm.provider === "ollama" ? deps.config.llm.numCtx : undefined,
       llmSkipped: state.llmSkipped,
       comparison: compared.comparison,
       comparisonNote: compared.note,

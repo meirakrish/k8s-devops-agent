@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { Finding } from "../src/agent/types.js";
-import { type LlmUsage, UsageMeter } from "../src/llm/model.js";
+import { type LlmUsage, UsageMeter } from "@meirakrish/llm-kit";
 import { renderMarkdownReport } from "../src/report/markdown.js";
 import type { ClusterOverview, Issue } from "../src/scan/types.js";
 
@@ -93,8 +93,8 @@ describe("report: token usage", () => {
       triageUsage: usage({ calls: 1, peakPromptTokens: 13500 }),
       numCtx: 16384,
     });
-    expect(md).toContain("**Context limit:** the largest prompt used 85% of `NUM_CTX`");
-    expect(md).toContain("- Context limit in triage: the largest prompt used 82% of `NUM_CTX`");
+    expect(md).toContain("**Context limit:** the largest prompt used 85% of `LLM_NUM_CTX`");
+    expect(md).toContain("- Context limit in triage: the largest prompt used 82% of `LLM_NUM_CTX`");
   });
 
   it("leaves usage out when the LLM client does not report it", () => {

@@ -2,8 +2,7 @@ import { AIMessage, type BaseMessage, HumanMessage, SystemMessage, ToolMessage }
 import type { StructuredToolInterface } from "@langchain/core/tools";
 import { Annotation, END, MessagesAnnotation, START, StateGraph } from "@langchain/langgraph";
 import { z } from "zod";
-import { errorMessage } from "../errors.js";
-import type { LlmClient } from "../llm/model.js";
+import { errorMessage, type LlmClient } from "@meirakrish/llm-kit";
 import type { Issue } from "../scan/types.js";
 import { computeConfidence, type StopReason } from "./confidence.js";
 import { checkFixes } from "./fix-check.js";
@@ -266,11 +265,9 @@ export function buildInvestigationGraph({ llm, tools, maxSteps, log = () => {} }
   }
 
   async function conclude(state: State): Promise<Partial<State>> {
-    const conclusion = await llm.structured(
-      ConclusionSchema,
-      [...state.messages, new HumanMessage(CONCLUDE_PROMPT)],
-      "conclusion",
-    );
+    const conclusion = await llm.structured(ConclusionSchema, [...state.messages, new HumanMessage(CONCLUDE_PROMPT)], {
+      name: "conclusion",
+    });
     // The model stopped on its own only if its last turn had no tool calls.
     const last = state.messages.at(-1);
     const stopReason: StopReason =
@@ -350,7 +347,7 @@ export function checkConclusion(
 
 export async function investigate(problem: Problem, deps: InvestigateDeps): Promise<Finding> {
   const graph = buildInvestigationGraph(deps);
-  deps.llm.takeUsage?.(); // count only this investigation's calls
+  deps.llm.takeUsage(); // count only this investigation's calls
   const messages: BaseMessage[] = [
     new SystemMessage(SYSTEM_PROMPT),
     new HumanMessage(problemPrompt(problem, deps.maxSteps)),
@@ -390,7 +387,7 @@ export async function investigate(problem: Problem, deps: InvestigateDeps): Prom
       ...checkConclusion(problem, result.conclusion, result.outputs, result.stopReason),
       toolCalls: result.steps,
       repeatedCalls: result.repeats,
-      usage: deps.llm.takeUsage?.(),
+      usage: deps.llm.takeUsage(),
     };
   } catch (err) {
     return {
@@ -402,7 +399,7 @@ export async function investigate(problem: Problem, deps: InvestigateDeps): Prom
       confidence: "low",
       confidenceReason: "investigation failed",
       toolCalls: 0,
-      usage: deps.llm.takeUsage?.(),
+      usage: deps.llm.takeUsage(),
       error: errorMessage(err),
     };
   }

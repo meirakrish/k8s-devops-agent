@@ -1,5 +1,5 @@
 import type { Confidence, FixFlag } from "../agent/types.js";
-import { addUsage, emptyUsage, type LlmUsage } from "../llm/model.js";
+import { addUsage, emptyUsage, type LlmUsage } from "@meirakrish/llm-kit";
 import type { Issue, Severity } from "../scan/types.js";
 import { changeCounts, issueKey, type IssueChange, type PreviousIssue } from "./compare.js";
 import { overallStatus, type OverallStatus, type ReportInput } from "./markdown.js";

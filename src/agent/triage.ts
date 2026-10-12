@@ -1,7 +1,6 @@
 import { HumanMessage, SystemMessage } from "@langchain/core/messages";
 import { z } from "zod";
-import { errorMessage } from "../errors.js";
-import type { LlmClient } from "../llm/model.js";
+import { errorMessage, type LlmClient } from "@meirakrish/llm-kit";
 import { compareSeverity, worstSeverity } from "../scan/severity.js";
 import type { ClusterOverview, Issue } from "../scan/types.js";
 import type { Problem } from "./types.js";
@@ -203,7 +202,7 @@ export async function triage(
         new SystemMessage(SYSTEM_PROMPT),
         new HumanMessage(`${formatIssuesForPrompt(overview, issues)}\n\nChoose at most ${maxProblems} problems.`),
       ],
-      "triage",
+      { name: "triage" },
     );
     const problems = buildProblems(result.problems, issues, maxProblems);
     if (problems.length > 0) {

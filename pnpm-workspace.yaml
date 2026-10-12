@@ -1,2 +1,4 @@
 allowBuilds:
   esbuild: true
+  "@meirakrish/llm-kit": true
+  "@meirakrish/llm-kit@https://codeload.github.com/meirakrish/llm-kit/tar.gz/ad3e32db31c7f4fda83d940ef229c1a07d6b7661": true
