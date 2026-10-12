@@ -129,40 +129,45 @@ one. If the LLM is unavailable, the graph skips straight to the report.
 ### What it checks
 
 The rules run on every scan, with or without the LLM. Severity decides the exit code.
+Severities use the scale shared with
+[iac-pr-reviewer](https://github.com/meirakrish/iac-pr-reviewer) (`low` < `medium` < `high` <
+`critical`): critical means the cluster or a workload is down, medium means degraded or at risk,
+and low is worth knowing. JSON reports before schema version 2 used `warning` and `info`;
+`--compare` reads them as `medium` and `low`.
 
 | Area | Check | Severity |
 | --- | --- | --- |
 | Control plane | `/readyz` check for etcd failing | critical |
 | Control plane | Other API server readiness checks failing | critical |
-| Control plane | API server certificate expires within 7 days / 30 days | critical / warning |
+| Control plane | API server certificate expires within 7 days / 30 days | critical / medium |
 | Control plane | Component pod (etcd, kube-apiserver, scheduler, controller-manager) not ready | critical |
-| Control plane | Component restarted, or failed 3+ health probes, within `EVENT_WINDOW_MINUTES` | warning |
+| Control plane | Component restarted, or failed 3+ health probes, within `EVENT_WINDOW_MINUTES` | medium |
 | Control plane | Leader-election Lease of kube-scheduler or kube-controller-manager not renewed for its `leaseDurationSeconds` + 60 s: nothing schedules / nothing reconciles (works on managed clusters; a missing Lease is "not visible") | critical |
 | Aggregated APIs | APIService backed by a Service (e.g. `v1beta1.metrics.k8s.io`) `Available=False` for longer than the grace period | critical |
-| Namespaces | Stuck Terminating longer than the grace period, with the blocking conditions; grouped with an unavailable APIService when discovery is what blocks it | warning |
-| etcd | Database at 90% / 70% of its quota (a full etcd makes the cluster read-only) | critical / warning |
-| etcd | More than 100,000 objects of one resource | warning |
+| Namespaces | Stuck Terminating longer than the grace period, with the blocking conditions; grouped with an unavailable APIService when discovery is what blocks it | medium |
+| etcd | Database at 90% / 70% of its quota (a full etcd makes the cluster read-only) | critical / medium |
+| etcd | More than 100,000 objects of one resource | medium |
 | Nodes | NotReady | critical |
 | Nodes | Kubelet heartbeat (its Lease) not renewed for over 60 seconds | critical |
 | Nodes | Kubelet newer than, or more than 3 minor versions behind, the API server | critical |
-| Nodes | CPU, memory or pod requests at 90% of allocatable | warning |
-| Nodes | Memory, disk or PID pressure / cordoned | warning / info |
+| Nodes | CPU, memory or pod requests at 90% of allocatable | medium |
+| Nodes | Memory, disk or PID pressure / cordoned | medium / low |
 | Webhooks | Service missing or without ready endpoints, `failurePolicy: Fail` (blocks requests) | critical |
-| Webhooks | Same, with `failurePolicy: Ignore` (policy silently skipped) | warning |
+| Webhooks | Same, with `failurePolicy: Ignore` (policy silently skipped) | medium |
 | Pods | CrashLoopBackOff, image pull errors, config errors, OOMKilled, unschedulable | critical |
 | Pods | Stuck before start (e.g. ContainerCreating) with `FailedMount` / `FailedAttachVolume` events: missing ConfigMap/Secret, Multi-Attach, unbound claim | critical |
-| Pods | Pending too long, failed or evicted, not ready, high restart count | warning |
+| Pods | Pending too long, failed or evicted, not ready, high restart count | medium |
 | PersistentVolumeClaims | `Lost` / `Pending` past the grace period while a pod waits for it (names a missing StorageClass, quotes `ProvisioningFailed`) | critical |
-| PersistentVolumeClaims | `Pending` past the grace period, not used by a pod (unused `WaitForFirstConsumer` claims are skipped) | warning |
-| Jobs | `Failed=True` (`BackoffLimitExceeded`, `DeadlineExceeded`); failed pods of a Job that later completed are ignored | warning |
-| CronJobs | Most recent finished run failed (an old failure followed by a successful run is ignored) | warning |
-| CronJobs | Suspended / last scheduled run not recorded as successful and its Job is gone | info |
-| Deployments | No ready replicas or rollout stuck / some replicas unavailable | critical / warning |
-| DaemonSets, StatefulSets | No ready pods / some pods not ready (with the StatefulSet's rollout revision) | critical / warning |
+| PersistentVolumeClaims | `Pending` past the grace period, not used by a pod (unused `WaitForFirstConsumer` claims are skipped) | medium |
+| Jobs | `Failed=True` (`BackoffLimitExceeded`, `DeadlineExceeded`); failed pods of a Job that later completed are ignored | medium |
+| CronJobs | Most recent finished run failed (an old failure followed by a successful run is ignored) | medium |
+| CronJobs | Suspended / last scheduled run not recorded as successful and its Job is gone | low |
+| Deployments | No ready replicas or rollout stuck / some replicas unavailable | critical / medium |
+| DaemonSets, StatefulSets | No ready pods / some pods not ready (with the StatefulSet's rollout revision) | critical / medium |
 | Pod creation | A ReplicaSet, StatefulSet, DaemonSet or Job cannot create pods (`FailedCreate`): quota exceeded, Pod Security, admission webhook, LimitRange, missing ServiceAccount | critical |
 | Services | Selected pods exist but none is ready (requests fail) | critical |
-| Services | Selector matches no pods; the report lists the label values pods actually have, to expose typos | warning |
-| Cluster DNS | `kube-system/kube-dns` has no ready endpoints / only some ready (checked even with `--namespace`) | critical / warning |
+| Services | Selector matches no pods; the report lists the label values pods actually have, to expose typos | medium |
+| Cluster DNS | `kube-system/kube-dns` has no ready endpoints / only some ready (checked even with `--namespace`) | critical / medium |
 
 Storage, Job and CronJob issues carry the workload of the pods involved (a CronJob's
 failed pods belong to the CronJob), so triage investigates them as one problem.
@@ -297,7 +302,7 @@ src/
                         storage- (PVCs, volume mounts) and cluster-rules (control plane,
                         etcd, leader election, webhooks, APIServices, namespaces)
   report/markdown.ts    Markdown report renderer
-  report/json.ts        JSON report (schema version 1)
+  report/json.ts        JSON report (schema version 2)
   report/compare.ts     Changes since a previous JSON report (--compare)
 test/                   Unit tests (fake cluster and scripted fake LLM; no Ollama needed)
 test/e2e/               End-to-end tests against the demo cluster
@@ -502,7 +507,7 @@ Scope: all namespaces
 | etcd database | 3.7 MiB of 2.0 GiB quota (0%), default quota assumed |
 | API server certificate | expires in 364 days (2027-10-09) |
 | Admission webhooks | 1, 1 unreachable |
-| Issues | 12 critical, 0 warning, 0 info |
+| Issues | 12 critical, 0 high, 0 medium, 0 low |
 | Investigated by LLM | 5 problem(s) |
 
 ## Investigated problems

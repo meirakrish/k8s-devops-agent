@@ -100,13 +100,13 @@ describe("demo cluster scan", () => {
 
   it("flags the storefront selector typo and shows the real label values", () => {
     const svc = issues.find((i) => i.id === `service/${NAMESPACE}/storefront:no-pods`);
-    expect(svc?.severity).toBe("warning");
+    expect(svc?.severity).toBe("medium");
     expect(svc?.evidence[1]).toContain("frontend");
   });
 
   it("flags the failed db-migrate Job and groups its failed pods with it", () => {
     const job = issues.find((i) => i.id === `job/${NAMESPACE}/db-migrate:failed`);
-    expect(job?.severity).toBe("warning");
+    expect(job?.severity).toBe("medium");
     expect(job?.title).toContain("BackoffLimitExceeded");
     expect(job?.workload).toBe(`${NAMESPACE}/db-migrate`);
     const pods = podIssuesOf("db-migrate");

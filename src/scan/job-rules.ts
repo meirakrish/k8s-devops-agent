@@ -43,7 +43,7 @@ function failureHint(j: JobSummary, kind: "Job" | "CronJob"): string {
 function failedJobIssue(j: JobSummary, now: Date): Issue {
   return {
     id: `job/${j.namespace}/${j.name}:failed`,
-    severity: "warning",
+    severity: "medium",
     category: "job-failed",
     resource: { kind: "Job", namespace: j.namespace, name: j.name },
     title: `Job ${j.namespace}/${j.name} failed (${j.failedCondition?.reason ?? "Failed"})`,
@@ -67,7 +67,7 @@ function cronJobIssues(cj: CronJobSummary, jobs: JobSummary[], now: Date, graceM
     return [
       {
         id: `cronjob/${cj.namespace}/${cj.name}:suspended`,
-        severity: "info",
+        severity: "low",
         category: "cronjob-suspended",
         resource,
         title: `CronJob ${cj.namespace}/${cj.name} is suspended and does not run`,
@@ -87,7 +87,7 @@ function cronJobIssues(cj: CronJobSummary, jobs: JobSummary[], now: Date, graceM
     return [
       {
         id: `cronjob/${cj.namespace}/${cj.name}:last-run-failed`,
-        severity: "warning",
+        severity: "medium",
         category: "cronjob-failed",
         resource,
         title: `CronJob ${cj.namespace}/${cj.name}: its most recent run failed (${latestFailed.failedCondition?.reason ?? "Failed"})`,
@@ -117,7 +117,7 @@ function cronJobIssues(cj: CronJobSummary, jobs: JobSummary[], now: Date, graceM
     return [
       {
         id: `cronjob/${cj.namespace}/${cj.name}:last-run-unconfirmed`,
-        severity: "info",
+        severity: "low",
         category: "cronjob-unconfirmed",
         resource,
         title: `CronJob ${cj.namespace}/${cj.name}: its last run is not recorded as successful`,
@@ -154,7 +154,7 @@ export function jobIssues(jobs: JobSummary[], cronJobs: CronJobSummary[], now: D
 /**
  * How the pod issues of Job pods should be treated, as "namespace/job" keys:
  * - `resolved`: Jobs whose failed pods no longer matter: the Job completed after retries,
- *   a newer run of its CronJob succeeded, or its CronJob is suspended (info at most).
+ *   a newer run of its CronJob succeeded, or its CronJob is suspended (low at most).
  * - `workloadOf`: Jobs of a CronJob, mapped to the CronJob, so pods of every run group
  *   with the CronJob's issue.
  */

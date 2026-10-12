@@ -21,7 +21,7 @@ Scanned at: 2026-10-10T07:55:02.320Z
 | etcd database | 6.3 MiB of 2.0 GiB quota (0%), default quota assumed |
 | API server certificate | expires in 364 days (2027-10-10) |
 | Admission webhooks | 1, 1 unreachable |
-| Issues | 16 critical, 3 warning, 0 info |
+| Issues | 16 critical, 0 high, 3 medium, 0 low |
 | Investigated by LLM | 5 problem(s) |
 
 ## Investigated problems
@@ -139,7 +139,7 @@ _Confidence: high · 3 tool call(s) · 11,631 prompt + 857 output tokens in 4 LL
 
 _Suggested next step:_ Restore the webhook's backend (Service agent-test/policy-webhook and its pods), or delete the ValidatingWebhookConfiguration agent-demo-policy if that component was uninstalled.
 
-### Warning (3)
+### Medium (3)
 
 #### Control-plane component kube-controller-manager restarted 37 min ago
 

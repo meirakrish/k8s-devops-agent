@@ -9,7 +9,7 @@ export type OverallStatus = "HEALTHY" | "DEGRADED" | "CRITICAL";
 /** Overall status from rule severities only (the LLM cannot change it); sets the exit code. */
 export function overallStatus(issues: Issue[]): OverallStatus {
   if (issues.some((i) => i.severity === "critical")) return "CRITICAL";
-  if (issues.some((i) => i.severity === "warning")) return "DEGRADED";
+  if (issues.some((i) => i.severity === "high" || i.severity === "medium")) return "DEGRADED";
   return "HEALTHY";
 }
 
@@ -24,9 +24,13 @@ function cell(text: string | undefined, max = 120): string {
 
 const SECTION_TITLES: Record<Severity, string> = {
   critical: "Critical",
-  warning: "Warning",
-  info: "Info",
+  high: "High",
+  medium: "Medium",
+  low: "Low",
 };
+
+/** Most severe first, for sections and counts. */
+const SEVERITIES = ["critical", "high", "medium", "low"] as const satisfies readonly Severity[];
 
 /** "[NEW] " or "[ESCALATED] " in front of a heading; nothing for ongoing issues. */
 function changeTag(change: IssueChange | undefined): string {
@@ -267,7 +271,7 @@ export function renderMarkdownReport({
     `| Cluster DNS | ${dns ? `${dns.readyEndpoints}/${dns.readyEndpoints + dns.notReadyEndpoints} endpoints ready` : "not visible"} |`,
     `| Warning events (recent) | ${overview.warningEvents.length} |`,
     ...controlPlaneRows(overview, issues, new Date(overview.scannedAt)),
-    `| Issues | ${count("critical")} critical, ${count("warning")} warning, ${count("info")} info |`,
+    `| Issues | ${SEVERITIES.map((s) => `${count(s)} ${s}`).join(", ")} |`,
     `| Investigated by LLM | ${findings.length > 0 ? `${findings.length} problem(s)` : "none"} |`,
   ];
   if (comparison) {
@@ -294,7 +298,7 @@ export function renderMarkdownReport({
   } else if (remaining.length === 0) {
     out.push("None; all issues are covered above.", "");
   } else {
-    for (const severity of ["critical", "warning", "info"] as const) {
+    for (const severity of SEVERITIES) {
       const group = remaining.filter((i) => i.severity === severity);
       if (group.length === 0) continue;
       out.push(`### ${SECTION_TITLES[severity]} (${group.length})`, "");

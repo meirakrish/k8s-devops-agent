@@ -6,9 +6,12 @@ import { overallStatus, type OverallStatus, type ReportInput } from "./markdown.
 
 /**
  * Machine-readable report for CI, dashboards and `--compare`. Bump the schema version on
- * breaking changes; `--compare` only reads reports of the same version.
+ * breaking changes; `--compare` reads the current and older versions it knows how to convert.
+ *
+ * Version 2: severities use llm-kit's shared scale (critical / high / medium / low) instead of
+ * critical / warning / info, and `counts` has one entry per level.
  */
-export const JSON_SCHEMA_VERSION = 1;
+export const JSON_SCHEMA_VERSION = 2;
 
 export interface JsonIssue extends Issue {
   /** Identity across runs (see issueKey); what `--compare` matches on. */
@@ -121,8 +124,9 @@ export function buildJsonReport({
     status: overallStatus(issues),
     counts: {
       critical: issues.filter((i) => i.severity === "critical").length,
-      warning: issues.filter((i) => i.severity === "warning").length,
-      info: issues.filter((i) => i.severity === "info").length,
+      high: issues.filter((i) => i.severity === "high").length,
+      medium: issues.filter((i) => i.severity === "medium").length,
+      low: issues.filter((i) => i.severity === "low").length,
     },
     summary: {
       nodes: ratio(overview.nodes.filter((n) => n.ready).length, overview.nodes.length),

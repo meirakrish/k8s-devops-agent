@@ -87,7 +87,7 @@ export function pvcIssues(
   return [
     {
       id: `pvc/${namespace}/${name}:pending`,
-      severity: users.length > 0 ? "critical" : "warning",
+      severity: users.length > 0 ? "critical" : "medium",
       category: "pvc-pending",
       resource,
       title: `PersistentVolumeClaim ${namespace}/${name} is not bound${pvc.storageClassProblem ? `: ${pvc.storageClassProblem}` : ""}`,
