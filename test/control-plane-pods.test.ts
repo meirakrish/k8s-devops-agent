@@ -93,7 +93,7 @@ describe("controlPlanePodIssues", () => {
       NOW,
       60,
     );
-    expect(issue?.severity).toBe("warning");
+    expect(issue?.severity).toBe("medium");
     expect(issue?.title).toBe("Control-plane component kube-scheduler restarted 16 min ago");
     expect(issue?.evidence[0]).toBe("last restart 16 min ago (Error, exit code 1); 2 restart(s) in total");
     expect(issue?.hint).toContain("leaderelection lost");

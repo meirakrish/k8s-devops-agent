@@ -73,7 +73,7 @@ function containerFindings(c: ContainerSummary, restartThreshold: number): PodFi
 
   if (c.restarts >= restartThreshold && !findings.some((f) => f.category === "crashloop")) {
     findings.push({
-      severity: "warning",
+      severity: "medium",
       category: "high-restarts",
       evidence: `${label} restarted ${c.restarts} times`,
       hint: "Check previous logs and liveness probe settings.",
@@ -146,7 +146,7 @@ export function podIssues(pod: PodSummary, opts: PodRuleOptions): Issue[] {
     }
   } else if (pod.phase === "Pending" && oldEnough && findings.length === 0) {
     findings.push({
-      severity: "warning",
+      severity: "medium",
       category: "pending",
       evidence: "Pod has been Pending longer than the grace period",
       hint: "Check pod events for volume, image or scheduling problems.",
@@ -155,7 +155,7 @@ export function podIssues(pod: PodSummary, opts: PodRuleOptions): Issue[] {
 
   if (pod.phase === "Failed") {
     findings.push({
-      severity: "warning",
+      severity: "medium",
       category: pod.reason === "Evicted" ? "evicted" : "pod-failed",
       evidence: `Pod phase is Failed${pod.reason ? ` (${pod.reason})` : ""}${pod.message ? `: ${pod.message}` : ""}`,
       hint:
@@ -167,7 +167,7 @@ export function podIssues(pod: PodSummary, opts: PodRuleOptions): Issue[] {
 
   if (pod.phase === "Running" && oldEnough && findings.length === 0 && pod.readyContainers < pod.totalContainers) {
     findings.push({
-      severity: "warning",
+      severity: "medium",
       category: "not-ready",
       evidence: `Only ${pod.readyContainers}/${pod.totalContainers} containers ready`,
       hint: "Usually a failing readiness probe; check pod events and the probe endpoint.",

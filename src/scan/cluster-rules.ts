@@ -72,7 +72,7 @@ export function controlPlaneIssues(cp: ControlPlaneSummary, now: Date): Issue[] 
       const expired = daysLeft < 0;
       issues.push({
         id: "controlplane/kube-apiserver:certificate",
-        severity: daysLeft < CLUSTER_THRESHOLDS.certCriticalDays ? "critical" : "warning",
+        severity: daysLeft < CLUSTER_THRESHOLDS.certCriticalDays ? "critical" : "medium",
         category: "certificate-expiry",
         resource: apiServer,
         title: expired
@@ -95,7 +95,7 @@ export function controlPlaneIssues(cp: ControlPlaneSummary, now: Date): Issue[] 
         .join(", ");
       issues.push({
         id: "controlplane/etcd:db-size",
-        severity: ratio >= CLUSTER_THRESHOLDS.etcdCriticalRatio ? "critical" : "warning",
+        severity: ratio >= CLUSTER_THRESHOLDS.etcdCriticalRatio ? "critical" : "medium",
         category: "etcd-db-size",
         resource: etcd,
         title: `etcd database is at ${formatPercent(ratio)} of its quota`,
@@ -113,7 +113,7 @@ export function controlPlaneIssues(cp: ControlPlaneSummary, now: Date): Issue[] 
     if (o.count < CLUSTER_THRESHOLDS.objectCountWarning) continue;
     issues.push({
       id: `controlplane/etcd:objects-${o.resource}`,
-      severity: "warning",
+      severity: "medium",
       category: "etcd-object-count",
       resource: etcd,
       title: `${o.count} ${o.resource} objects stored in etcd`,
@@ -132,7 +132,7 @@ export function webhookIssues(w: WebhookSummary): Issue[] {
   return [
     {
       id: `webhook/${w.configName}/${w.name}:unavailable`,
-      severity: blocking ? "critical" : "warning",
+      severity: blocking ? "critical" : "medium",
       category: "webhook-unavailable",
       resource: { kind: `${w.kind}WebhookConfiguration`, name: w.configName },
       title: blocking
@@ -215,7 +215,7 @@ export function controlPlanePodIssues(pods: ControlPlanePod[], now: Date, window
 
     issues.push({
       id: `pod/kube-system/${pod.name}:${category}`,
-      severity: down ? "critical" : "warning",
+      severity: down ? "critical" : "medium",
       category,
       resource: { kind: "Pod", namespace: "kube-system", name: pod.name },
       title,
@@ -326,7 +326,7 @@ export function terminatingNamespaceIssues(
   return [
     {
       id: `namespace/${ns.name}:stuck-terminating`,
-      severity: "warning",
+      severity: "medium",
       category: apiBlocked ? "namespace-terminating-api" : "namespace-terminating",
       resource: { kind: "Namespace", name: ns.name },
       title: `Namespace ${ns.name} is stuck Terminating${Number.isFinite(minutes) ? ` for ${Math.round(minutes)} min` : ""}`,

@@ -1,8 +1,8 @@
 import { readFile } from "node:fs/promises";
 import { z } from "zod";
-import { errorMessage } from "@meirakrish/llm-kit";
+import { errorMessage, Severity } from "@meirakrish/llm-kit";
 import { compareSeverity } from "../scan/severity.js";
-import type { ClusterOverview, Issue, Severity } from "../scan/types.js";
+import type { ClusterOverview, Issue } from "../scan/types.js";
 
 /**
  * Compares this run's issues with a previous JSON report, so a scheduled run can say what
@@ -49,8 +49,11 @@ export function issueKey(issue: Issue): string {
   return issue.id;
 }
 
+/** Schema version 1 used critical / warning / info; version 2 uses llm-kit's shared scale. */
+const V1_SEVERITY = { critical: "critical", warning: "medium", info: "low" } as const;
+
 const PreviousReportSchema = z.object({
-  schemaVersion: z.literal(1),
+  schemaVersion: z.union([z.literal(1), z.literal(2)]),
   context: z.string(),
   namespace: z.string().nullable(),
   scannedAt: z.string(),
@@ -58,7 +61,8 @@ const PreviousReportSchema = z.object({
     z.object({
       key: z.string(),
       id: z.string(),
-      severity: z.enum(["critical", "warning", "info"]),
+      // Version 1 values are mapped onto the shared scale, so --compare keeps working across the upgrade.
+      severity: z.union([Severity, z.enum(["warning", "info"]).transform((s) => V1_SEVERITY[s])]),
       title: z.string(),
     }),
   ),

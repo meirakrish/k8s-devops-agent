@@ -201,7 +201,7 @@ describe("namespaces stuck terminating", () => {
     const [issue] = terminatingNamespaceIssues(stuck(), [metricsApi()], NOW);
     expect(issue).toMatchObject({
       id: "namespace/old-app:stuck-terminating",
-      severity: "warning",
+      severity: "medium",
       category: "namespace-terminating-api",
       resource: { kind: "Namespace", name: "old-app" },
       title: "Namespace old-app is stuck Terminating for 30 min",

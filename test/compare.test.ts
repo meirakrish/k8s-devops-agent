@@ -50,8 +50,8 @@ const webPodReplaced = issue(
   "critical",
   "shop/web",
 );
-const apiDeploy = issue("deployment/shop/api:unavailable", "Deployment", "api", "warning", "shop/api");
-const node = issue("node/n1:pressure", "Node", "n1", "warning");
+const apiDeploy = issue("deployment/shop/api:unavailable", "Deployment", "api", "medium", "shop/api");
+const node = issue("node/n1:pressure", "Node", "n1", "medium");
 
 const previousOf = (issues: Issue[], extra: Partial<PreviousReport> = {}): PreviousReport => ({
   context: "kind-demo",
@@ -80,7 +80,7 @@ describe("comparing with a previous report", () => {
     const now = [
       webPodReplaced,
       { ...apiDeploy, severity: "critical" as const },
-      issue("node/n1:cordoned", "Node", "n1", "info"),
+      issue("node/n1:cordoned", "Node", "n1", "low"),
     ];
     const { comparison, note } = compareWithPrevious(overview, now, before);
     expect(note).toBeUndefined();
@@ -94,7 +94,7 @@ describe("comparing with a previous report", () => {
   });
 
   it("does not call an issue escalated when another issue with its key was already critical", () => {
-    const warningPod = { ...webPod, id: "pod/shop/web-7db8d69f68-bbbbb:crashloop", severity: "warning" as const };
+    const warningPod = { ...webPod, id: "pod/shop/web-7db8d69f68-bbbbb:crashloop", severity: "medium" as const };
     const { comparison } = compareWithPrevious(overview, [webPodReplaced], previousOf([warningPod, webPod]));
     expect(comparison?.changes[webPodReplaced.id]).toBe("ongoing");
   });
@@ -132,6 +132,25 @@ describe("loading a previous report", () => {
     expect(Object.values(comparison!.changes)).toEqual(["ongoing", "ongoing"]);
     expect(comparison?.resolved).toEqual([]);
   });
+
+  it("reads a schema 1 report, mapping warning to medium and info to low", async () => {
+    const v1 = {
+      schemaVersion: 1,
+      context: overview.context,
+      namespace: null,
+      scannedAt: "2026-01-01T12:00:00.000Z",
+      issues: [
+        { key: apiDeploy.id, id: apiDeploy.id, severity: "warning", title: apiDeploy.title },
+        { key: "node/n1:cordoned", id: "node/n1:cordoned", severity: "info", title: "Node n1 is cordoned" },
+      ],
+    };
+    const { report, note } = await loadPreviousReport(await file(JSON.stringify(v1)));
+    expect(note).toBeUndefined();
+    expect(report?.issues.map((i) => i.severity)).toEqual(["medium", "low"]);
+    // apiDeploy is critical now, so it escalated from the old "warning".
+    const { comparison } = compareWithPrevious(overview, [apiDeploy], report!);
+    expect(comparison?.changes[apiDeploy.id]).toBe(apiDeploy.severity === "critical" ? "escalated" : "ongoing");
+  });
 });
 
 describe("JSON report", () => {
@@ -148,11 +167,11 @@ describe("JSON report", () => {
   it("has status, counts, summary, issues with keys, findings and notes", () => {
     const json = buildJsonReport({ overview, issues: [webPod, apiDeploy], findings: [finding], llmSkipped: undefined });
     expect(json).toMatchObject({
-      schemaVersion: 1,
+      schemaVersion: 2,
       context: "kind-demo",
       namespace: null,
       status: "CRITICAL",
-      counts: { critical: 1, warning: 1, info: 0 },
+      counts: { critical: 1, high: 0, medium: 1, low: 0 },
       summary: { nodes: { ready: 1, total: 1 }, clusterDns: null, etcd: null },
       comparison: null,
       notes: { scanErrors: [], notChecked: ["etcd size: forbidden"], llm: {} },
@@ -174,7 +193,7 @@ describe("JSON report", () => {
     ]);
   });
 
-  it("adds the computed-confidence and fix-check fields as optional fields of schema 1", () => {
+  it("adds the computed-confidence and fix-check fields as optional fields of schema 2", () => {
     const checked: Finding = {
       ...finding,
       confidence: "medium",
@@ -186,7 +205,7 @@ describe("JSON report", () => {
       repeatedCalls: 2,
     };
     const json = buildJsonReport({ overview, issues: [webPod, apiDeploy], findings: [checked] });
-    expect(json.schemaVersion).toBe(1);
+    expect(json.schemaVersion).toBe(2);
     expect(json.findings[0]).toMatchObject({
       confidence: "medium",
       confidenceReason: "only 1 of 3 evidence point(s) found in tool output; the model said high",
@@ -213,7 +232,7 @@ describe("markdown report with changes", () => {
     expect(md).toContain("## Changes since last run");
     expect(md).toContain(`- **NEW** [CRITICAL] ${webPod.title}`);
     expect(md).toContain(`- **ESCALATED** [CRITICAL] ${apiDeploy.title}`);
-    expect(md).toContain(`- **RESOLVED** [WARNING] ${node.title}`);
+    expect(md).toContain(`- **RESOLVED** [MEDIUM] ${node.title}`);
     expect(md).toContain(`#### [NEW] ${webPod.title}`);
   });
 

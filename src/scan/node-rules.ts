@@ -29,7 +29,7 @@ export function nodeIssues(node: NodeSummary): Issue[] {
   if (node.pressures.length > 0) {
     issues.push({
       id: `node/${node.name}:pressure`,
-      severity: "warning",
+      severity: "medium",
       category: "node-pressure",
       resource,
       title: `Node ${node.name} reports ${node.pressures.join(", ")}`,
@@ -40,7 +40,7 @@ export function nodeIssues(node: NodeSummary): Issue[] {
   if (node.unschedulable) {
     issues.push({
       id: `node/${node.name}:cordoned`,
-      severity: "info",
+      severity: "low",
       category: "node-cordoned",
       resource,
       title: `Node ${node.name} is cordoned (unschedulable)`,
@@ -87,7 +87,7 @@ export function nodeCapacityIssues(node: NodeSummary, now: Date, serverVersion?:
     if (full.length > 0) {
       issues.push({
         id: `node/${node.name}:capacity`,
-        severity: "warning",
+        severity: "medium",
         category: "node-capacity",
         resource,
         title: `Node ${node.name} is nearly full (${full.map((c) => `${c.name} ${formatPercent(c.used / c.total!)}`).join(", ")} requested)`,

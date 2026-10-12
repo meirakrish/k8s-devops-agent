@@ -92,7 +92,7 @@ describe("service rules", () => {
     )!;
     const [issue, ...rest] = serviceIssues(s, NOW);
     expect(rest).toHaveLength(0);
-    expect(issue?.severity).toBe("warning");
+    expect(issue?.severity).toBe("medium");
     expect(issue?.category).toBe("service-no-pods");
     expect(issue?.evidence).toEqual([
       "selector app=fronted matches no running pods in namespace shop",
@@ -181,7 +181,7 @@ describe("DaemonSet and StatefulSet rules", () => {
   it("warns when some DaemonSet pods are not ready and mentions networking in kube-system", () => {
     const [issue] = workloadIssues(ds);
     expect(issue?.id).toBe("daemonset/kube-system/kube-proxy:unavailable");
-    expect(issue?.severity).toBe("warning");
+    expect(issue?.severity).toBe("medium");
     expect(issue?.title).toBe("DaemonSet kube-system/kube-proxy has 2/3 pods ready");
     expect(issue?.hint).toContain("lose networking");
     expect(issue?.workload).toBe("kube-system/kube-proxy");

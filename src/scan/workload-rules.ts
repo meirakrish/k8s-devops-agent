@@ -46,7 +46,7 @@ export function deploymentIssues(d: DeploymentSummary): Issue[] {
     const replicaFailure = d.conditions.find((c) => c.type === "ReplicaFailure" && c.status === "True");
     issues.push({
       id: `deployment/${d.namespace}/${d.name}:unavailable`,
-      severity: d.ready === 0 ? "critical" : "warning",
+      severity: d.ready === 0 ? "critical" : "medium",
       category: "replicas-unavailable",
       resource,
       title: `Deployment ${d.namespace}/${d.name} has ${d.ready}/${d.desired} replicas ready`,
@@ -83,7 +83,7 @@ export function workloadIssues(w: WorkloadSummary): Issue[] {
   return [
     {
       id: `${w.kind.toLowerCase()}/${w.namespace}/${w.name}:unavailable`,
-      severity: w.ready === 0 ? "critical" : "warning",
+      severity: w.ready === 0 ? "critical" : "medium",
       category: "replicas-unavailable",
       resource: { kind: w.kind, namespace: w.namespace, name: w.name },
       title: `${w.kind} ${w.namespace}/${w.name} has ${w.ready}/${w.desired} pods ready`,
@@ -111,7 +111,7 @@ export function serviceIssues(svc: ServiceSummary, now: Date, graceMinutes = 5):
     return [
       {
         id: `service/${namespace}/${name}:no-pods`,
-        severity: "warning",
+        severity: "medium",
         category: "service-no-pods",
         resource,
         title: `Service ${namespace}/${name} selects no pods, so requests to it fail`,
@@ -132,7 +132,7 @@ export function serviceIssues(svc: ServiceSummary, now: Date, graceMinutes = 5):
     return [
       {
         id: `service/${namespace}/${name}:no-ready-endpoints`,
-        severity: "warning",
+        severity: "medium",
         category: "service-no-ready-endpoints",
         resource,
         title: `Service ${namespace}/${name} has no ready endpoints although ${readyPods.length} of its pods are ready`,
@@ -191,7 +191,7 @@ export function dnsIssues(dns: DnsSummary): Issue[] {
     return [
       {
         id: `service/${svc.namespace}/${svc.name}:dns-degraded`,
-        severity: "warning",
+        severity: "medium",
         category: "dns-degraded",
         resource,
         title: `Cluster DNS is degraded: ${svc.readyEndpoints} of ${total} endpoints of ${svc.namespace}/${svc.name} are ready`,

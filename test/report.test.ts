@@ -41,7 +41,7 @@ const crash: Issue = {
 describe("report", () => {
   it("derives overall status from the worst severity", () => {
     expect(overallStatus([])).toBe("HEALTHY");
-    expect(overallStatus([{ ...crash, severity: "warning" }])).toBe("DEGRADED");
+    expect(overallStatus([{ ...crash, severity: "medium" }])).toBe("DEGRADED");
     expect(overallStatus([crash])).toBe("CRITICAL");
   });
 
@@ -304,9 +304,9 @@ describe("report: jobs, storage, aggregated APIs and leader election", () => {
     expect(hidden).toContain("- Not checked: aggregated APIs (APIServices): forbidden");
   });
 
-  it("adds the new summary fields to the JSON report without changing the schema version", () => {
+  it("adds the new summary fields to the JSON report without another schema version bump", () => {
     const json = buildJsonReport({ overview: extended, issues: [] });
-    expect(json.schemaVersion).toBe(1);
+    expect(json.schemaVersion).toBe(2);
     expect(json.summary.jobs).toEqual({ failed: 1, total: 2 });
     expect(json.summary.cronJobs).toEqual({ suspended: 1, total: 1 });
     expect(json.summary.persistentVolumeClaims).toEqual({ bound: 1, total: 2 });

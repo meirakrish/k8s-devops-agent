@@ -310,7 +310,13 @@ export interface ClusterOverview {
   errors: string[];
 }
 
-export type Severity = "critical" | "warning" | "info";
+/**
+ * llm-kit's shared scale: low < medium < high < critical. The rules use critical (the cluster or a
+ * workload is down), medium (degraded or at risk) and low (worth knowing). high is for issues between
+ * an outage and degradation.
+ */
+import type { Severity } from "@meirakrish/llm-kit";
+export type { Severity };
 
 export interface Issue {
   /** Stable id, e.g. "pod/default/web-123:crashloop". */

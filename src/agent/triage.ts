@@ -15,7 +15,7 @@ Rules:
 - Several pods of the same Deployment failing the same way are ONE problem.
 - A Service without ready endpoints and the failing pods it selects are ONE problem; use the pod issue as primary.
 - An unavailable APIService and namespaces stuck Terminating because of API discovery are ONE problem; use the APIService as primary.
-- Prefer critical issues, then warnings. Skip info issues unless nothing else is wrong.
+- Prefer critical issues, then high, then medium. Skip low issues unless nothing else is wrong.
 - Use only issue ids from the list, exactly as written.`;
 
 /** One line per issue (id, severity, title, first evidence), kept short for the model. */
@@ -93,7 +93,7 @@ export function groupKey(i: Issue): string {
  * problem per group, most severe first.
  */
 export function fallbackTriage(issues: Issue[], maxProblems: number): Problem[] {
-  const candidates = issues.filter((i) => i.severity !== "info");
+  const candidates = issues.filter((i) => i.severity !== "low");
   const used = new Set<string>();
   const problems: Problem[] = [];
 
@@ -154,7 +154,7 @@ export function buildProblems(
 /**
  * Adds critical issues the LLM left out, while there is room under the limit. With many
  * issues, the model sometimes returns fewer problems than allowed and skips critical ones
- * (in testing: an OOM-killed pod and an unreachable webhook). Warnings stay its choice.
+ * (in testing: an OOM-killed pod and an unreachable webhook). Lower severities stay its choice.
  */
 export function addMissedCritical(problems: Problem[], issues: Issue[], maxProblems: number): Problem[] {
   const room = maxProblems - problems.length;

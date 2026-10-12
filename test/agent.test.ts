@@ -33,7 +33,7 @@ const payPod = {
   ...issue("pod/shop/payments-9877b44c9-hql6z:image-pull", "Pod", "payments-9877b44c9-hql6z"),
   workload: "shop/payments",
 };
-const cordoned = issue("node/n1:cordoned", "Node", "n1", "info");
+const cordoned = issue("node/n1:cordoned", "Node", "n1", "low");
 const ALL = [webDeploy, webPod1, webPod2, payPod, cordoned];
 
 const overview: ClusterOverview = {
@@ -132,7 +132,7 @@ describe("triage", () => {
   });
 
   it("groups a control-plane incident into one problem, starting from the API server", async () => {
-    const cp = (component: string, category: string, severity: Issue["severity"] = "warning"): Issue => ({
+    const cp = (component: string, category: string, severity: Issue["severity"] = "medium"): Issue => ({
       ...issue(`pod/kube-system/${component}-cp:${category}`, "Pod", `${component}-cp`, severity),
       category,
       resource: { kind: "Pod", namespace: "kube-system", name: `${component}-cp` },
@@ -181,7 +181,7 @@ describe("triage", () => {
   });
 
   it("leaves skipped warnings to the LLM's judgement", () => {
-    const warning = issue("pod/shop/api-5f6d7c8b9-abcde:high-restarts", "Pod", "api-5f6d7c8b9-abcde", "warning");
+    const warning = issue("pod/shop/api-5f6d7c8b9-abcde:high-restarts", "Pod", "api-5f6d7c8b9-abcde", "medium");
     const picked = buildProblems([{ issueId: payPod.id }], [payPod, warning], 5);
     expect(addMissedCritical(picked, [payPod, warning], 5)).toEqual(picked);
   });
@@ -550,12 +550,12 @@ describe("triage grouping by workload", () => {
 
   it("groups a failing CronJob with the failed pods of its Jobs", () => {
     const cronJob: Issue = {
-      ...issue("cronjob/shop/report:last-run-failed", "CronJob", "report", "warning"),
+      ...issue("cronjob/shop/report:last-run-failed", "CronJob", "report", "medium"),
       category: "cronjob-failed",
       workload: "shop/report",
     };
     const jobPod: Issue = {
-      ...issue("pod/shop/report-29123-abcde:pod-failed", "Pod", "report-29123-abcde", "warning"),
+      ...issue("pod/shop/report-29123-abcde:pod-failed", "Pod", "report-29123-abcde", "medium"),
       category: "pod-failed",
       workload: "shop/report",
     };
@@ -586,14 +586,14 @@ describe("triage grouping of cluster-level issues", () => {
     "Namespace",
     "old-app",
     "namespace-terminating-api",
-    "warning",
+    "medium",
   );
   const stuckOnFinalizer = cluster(
     "namespace/operator:stuck-terminating",
     "Namespace",
     "operator",
     "namespace-terminating",
-    "warning",
+    "medium",
   );
 
   it("merges an unavailable APIService and the namespaces it keeps from deleting, led by the APIService", () => {

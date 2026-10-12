@@ -99,7 +99,7 @@ describe("Job rules", () => {
     expect(rest).toEqual([]);
     expect(issue).toMatchObject({
       id: "job/ops/migrate:failed",
-      severity: "warning",
+      severity: "medium",
       category: "job-failed",
       resource: { kind: "Job", namespace: "ops", name: "migrate" },
       title: "Job ops/migrate failed (BackoffLimitExceeded)",
@@ -142,7 +142,7 @@ describe("CronJob rules", () => {
     expect(issues).toHaveLength(1);
     expect(issues[0]).toMatchObject({
       id: "cronjob/ops/report:last-run-failed",
-      severity: "warning",
+      severity: "medium",
       category: "cronjob-failed",
       resource: { kind: "CronJob", namespace: "ops", name: "report" },
       workload: "ops/report",
@@ -179,14 +179,14 @@ describe("CronJob rules", () => {
   it("reports a suspended CronJob as info only, even when its last run failed", () => {
     const jobs = [job("report-1", { cronJob: "report", ...failed() })];
     const issues = jobIssues(jobs, [cronJob("report", { suspended: true })], NOW);
-    expect(issues.map((i) => [i.id, i.severity])).toEqual([["cronjob/ops/report:suspended", "info"]]);
+    expect(issues.map((i) => [i.id, i.severity])).toEqual([["cronjob/ops/report:suspended", "low"]]);
     expect(issues[0]?.evidence[1]).toContain("its most recent run failed");
   });
 
   it("uses CronJob status when no Job is kept, as info since the outcome is not visible", () => {
     const unconfirmed = cronJob("cleanup", { lastScheduleTime: minutesAgo(30), lastSuccessfulTime: minutesAgo(90) });
     expect(jobIssues([], [unconfirmed], NOW).map((i) => [i.id, i.severity])).toEqual([
-      ["cronjob/ops/cleanup:last-run-unconfirmed", "info"],
+      ["cronjob/ops/cleanup:last-run-unconfirmed", "low"],
     ]);
     // Not when the last run succeeded, is running, or was scheduled moments ago.
     const fine = [

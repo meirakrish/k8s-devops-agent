@@ -116,7 +116,7 @@ describe("control plane rules", () => {
         NOW,
       );
     expect(expiring(60)).toEqual([]);
-    expect(expiring(20)[0]?.severity).toBe("warning");
+    expect(expiring(20)[0]?.severity).toBe("medium");
     expect(expiring(3)[0]?.severity).toBe("critical");
     expect(expiring(-1)[0]?.title).toBe("API server certificate has expired");
   });
@@ -126,7 +126,7 @@ describe("control plane rules", () => {
       controlPlaneIssues({ ...healthy, etcd: { ...healthy.etcd!, dbSizeBytes: bytes } }, NOW);
     expect(withSize(1.0 * 1024 ** 3)).toEqual([]);
     const warn = withSize(1.5 * 1024 ** 3)[0];
-    expect(warn?.severity).toBe("warning");
+    expect(warn?.severity).toBe("medium");
     expect(warn?.title).toBe("etcd database is at 75% of its quota");
     expect(warn?.evidence[0]).toContain("etcd default");
     expect(withSize(1.9 * 1024 ** 3)[0]?.severity).toBe("critical");
@@ -218,7 +218,7 @@ describe("webhook rules", () => {
   });
 
   it("is a warning when it fails open, and silent when healthy or external", () => {
-    expect(webhookIssues({ ...webhook, failurePolicy: "Ignore" })[0]?.severity).toBe("warning");
+    expect(webhookIssues({ ...webhook, failurePolicy: "Ignore" })[0]?.severity).toBe("medium");
     expect(webhookIssues({ ...webhook, status: "ok" })).toEqual([]);
     expect(webhookIssues({ ...webhook, status: "external" })).toEqual([]);
   });

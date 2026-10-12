@@ -199,7 +199,7 @@ describe("pod rules", () => {
       }),
     );
     expect(issue?.category).toBe("high-restarts");
-    expect(issue?.severity).toBe("warning");
+    expect(issue?.severity).toBe("medium");
   });
 
   it("flags running pods that stay not ready", () => {
@@ -238,14 +238,14 @@ describe("node rules", () => {
     );
     expect(issues.map((i) => [i.category, i.severity])).toEqual([
       ["node-not-ready", "critical"],
-      ["node-pressure", "warning"],
+      ["node-pressure", "medium"],
     ]);
   });
 
   it("reports cordoned nodes as info and extracts roles", () => {
     const summary = summarizeNode(node([{ type: "Ready", status: "True" }], true));
     expect(summary.roles).toEqual(["control-plane"]);
-    expect(nodeIssues(summary).map((i) => i.severity)).toEqual(["info"]);
+    expect(nodeIssues(summary).map((i) => i.severity)).toEqual(["low"]);
   });
 });
 
@@ -261,7 +261,7 @@ describe("deployment rules", () => {
 
   it("is critical when no replicas are ready, warning when some are", () => {
     expect(deploymentIssues(summarizeDeployment(deployment(3, 0)))[0]?.severity).toBe("critical");
-    expect(deploymentIssues(summarizeDeployment(deployment(3, 2)))[0]?.severity).toBe("warning");
+    expect(deploymentIssues(summarizeDeployment(deployment(3, 2)))[0]?.severity).toBe("medium");
     expect(deploymentIssues(summarizeDeployment(deployment(3, 3)))).toEqual([]);
   });
 
@@ -325,6 +325,6 @@ describe("detectIssues", () => {
       apiHealth: { notVisible: [] },
       errors: [],
     };
-    expect(detectIssues(overview, OPTS).map((i) => i.severity)).toEqual(["critical", "warning"]);
+    expect(detectIssues(overview, OPTS).map((i) => i.severity)).toEqual(["critical", "medium"]);
   });
 });

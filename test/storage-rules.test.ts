@@ -132,7 +132,7 @@ describe("PVC rules", () => {
   it("is a warning when no pod uses the claim, and quotes ProvisioningFailed", () => {
     const failure = event("PersistentVolumeClaim", "data", "ProvisioningFailed", "failed to provision volume: quota");
     const [issue] = pvcIssues(pvc(), [], [failure], NOW);
-    expect(issue?.severity).toBe("warning");
+    expect(issue?.severity).toBe("medium");
     expect(issue?.workload).toBeUndefined();
     expect(issue?.evidence).toContain("ProvisioningFailed x4, last 2 min ago: failed to provision volume: quota");
     expect(issue?.hint).toContain("ProvisioningFailed");

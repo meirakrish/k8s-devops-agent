@@ -45,18 +45,18 @@ describe("--fail-on", () => {
 
   it('"critical" fails on any critical issue', () => {
     expect(shouldFail(report([issue("critical", "ongoing")], true), "critical")).toBe(true);
-    expect(shouldFail(report([issue("warning", "new")], true), "critical")).toBe(false);
+    expect(shouldFail(report([issue("medium", "new")], true), "critical")).toBe(false);
   });
 
   it('"new" fails only on critical issues that are new or escalated', () => {
-    expect(shouldFail(report([issue("critical", "ongoing"), issue("warning", "new")], true), "new")).toBe(false);
+    expect(shouldFail(report([issue("critical", "ongoing"), issue("medium", "new")], true), "new")).toBe(false);
     expect(shouldFail(report([issue("critical", "new")], true), "new")).toBe(true);
     expect(shouldFail(report([issue("critical", "escalated")], true), "new")).toBe(true);
   });
 
   it('"new" without a comparison treats every critical issue as new', () => {
     expect(shouldFail(report([issue("critical")], false), "new")).toBe(true);
-    expect(shouldFail(report([issue("warning")], false), "new")).toBe(false);
+    expect(shouldFail(report([issue("medium")], false), "new")).toBe(false);
   });
 });
 
