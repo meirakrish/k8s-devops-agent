@@ -2,9 +2,19 @@
   "name": "k8s-devops-agent",
   "version": "0.1.0",
   "private": true,
+  "description": "Read-only Kubernetes health checks with LLM triage and root-cause investigation",
+  "license": "MIT",
   "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/meirakrish/k8s-devops-agent.git"
+  },
+  "homepage": "https://github.com/meirakrish/k8s-devops-agent#readme",
+  "bugs": {
+    "url": "https://github.com/meirakrish/k8s-devops-agent/issues"
+  },
   "engines": {
-    "node": ">=20"
+    "node": ">=20.11"
   },
   "scripts": {
     "check": "tsx src/cli.ts",
@@ -24,15 +34,16 @@
     "@kubernetes/client-node": "^2.0.0",
     "@langchain/core": "^1.2.17",
     "@langchain/langgraph": "^1.4.21",
-    "@meirakrish/llm-kit": "github:meirakrish/llm-kit",
+    "@meirakrish/llm-kit": "github:meirakrish/llm-kit#ad3e32db31c7f4fda83d940ef229c1a07d6b7661",
     "dotenv": "^18.0.6",
     "zod": "^4.6.5"
   },
   "devDependencies": {
-    "@types/node": "^26.6.4",
+    "@types/node": "^24.19.2",
     "prettier": "^3.9.9",
     "tsx": "^4.23.15",
     "typescript": "^7.0.2",
     "vitest": "^5.0.3"
-  }
+  },
+  "packageManager": "pnpm@12.11.2"
 }
