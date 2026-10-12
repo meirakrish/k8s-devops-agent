@@ -5,7 +5,7 @@ import { z } from "zod";
 import { investigate, problemPrompt, seedCall } from "../src/agent/investigate.js";
 import { addMissedCritical, buildProblems, fallbackTriage, triage } from "../src/agent/triage.js";
 import type { Problem } from "../src/agent/types.js";
-import type { LlmClient } from "../src/llm/model.js";
+import { emptyUsage, type LlmClient } from "@meirakrish/llm-kit";
 import type { ClusterOverview, Issue } from "../src/scan/types.js";
 
 function issue(id: string, kind: string, name: string, severity: Issue["severity"] = "critical"): Issue {
@@ -70,6 +70,9 @@ const CONCLUSION = {
 function fakeLlm(replies: AIMessage[], structured: unknown = CONCLUSION) {
   const seen: BaseMessage[][] = [];
   const llm: LlmClient = {
+    provider: "custom",
+    model: "fake",
+    takeUsage: emptyUsage,
     chatWithTools: async (messages) => {
       seen.push(messages);
       const next = replies.shift();

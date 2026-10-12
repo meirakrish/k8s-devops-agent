@@ -206,11 +206,34 @@ describe("recentEvents", () => {
 
 describe("config", () => {
   it("applies defaults and treats empty values as unset", () => {
-    const c = loadConfig({ OLLAMA_URL: "http://ollama:11434/", KUBECONFIG: "", MAX_STEPS_PER_PROBLEM: "" });
-    expect(c.ollamaUrl).toBe("http://ollama:11434");
+    const c = loadConfig({ OLLAMA_HOST: "http://ollama:11434/", KUBECONFIG: "", MAX_STEPS_PER_PROBLEM: "" });
+    expect(c.llm).toMatchObject({
+      provider: "ollama",
+      ollamaHost: "http://ollama:11434",
+      model: "qwen2.5:7b-instruct",
+    });
     expect(c.kubeconfigPath).toBeUndefined();
     expect(c.maxStepsPerProblem).toBe(6);
-    expect(c.model).toBe("qwen2.5:7b-instruct");
+  });
+
+  it("stays on local Ollama unless a hosted provider is chosen explicitly", () => {
+    expect(loadConfig({ ANTHROPIC_API_KEY: "k", OPENAI_API_KEY: "k" }).llm.provider).toBe("ollama");
+    expect(loadConfig({ LLM_PROVIDER: "anthropic", ANTHROPIC_API_KEY: "k" }).llm).toMatchObject({
+      provider: "anthropic",
+      model: "claude-sonnet-5-5",
+    });
+  });
+
+  it("reads the old OLLAMA_URL, MODEL and NUM_CTX names with a deprecation warning", () => {
+    const warnings: string[] = [];
+    const c = loadConfig({ OLLAMA_URL: "ollama:11434", MODEL: "llama3", NUM_CTX: "8192" }, (m) => warnings.push(m));
+    expect(c.llm).toMatchObject({ ollamaHost: "http://ollama:11434", model: "llama3", numCtx: 8192 });
+    expect(warnings).toEqual([
+      "OLLAMA_URL is deprecated; use OLLAMA_HOST",
+      "MODEL is deprecated; use LLM_MODEL",
+      "NUM_CTX is deprecated; use LLM_NUM_CTX",
+    ]);
+    expect(loadConfig({ MODEL: "old", LLM_MODEL: "new" }, () => {}).llm.model).toBe("new");
   });
 
   it("rejects invalid values with a readable error", () => {

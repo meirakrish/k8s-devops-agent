@@ -5,8 +5,9 @@ each run it scans the cluster, decides what to dig into, investigates each probl
 read-only tools, and writes a report: what's wrong, the likely root cause, and a suggested
 fix.
 
-Everything runs on your machine. The LLM is served by [Ollama](https://ollama.com), so no
-cloud LLM APIs are used, and no cluster data leaves your machine.
+Everything runs on your machine. By default the LLM is served by [Ollama](https://ollama.com),
+so no cloud LLM APIs are used and no cluster data leaves your machine. Anthropic and OpenAI
+can be used instead, but only when chosen explicitly with `LLM_PROVIDER`.
 
 ```text
 $ pnpm demo:check --verbose
@@ -260,7 +261,7 @@ several failure modes, and each fix moved responsibility from the prompt into co
   form are checked, so generic advice and placeholders like `<your-image>` are not marked.
 - **Bounded output and context.** Tool output is truncated, keeping the head and the
   tail, since errors are usually at the end. Env var values are never shown, and the
-  context window (`NUM_CTX`) is set explicitly. A prompt that does not fit is rejected
+  context window (`LLM_NUM_CTX`) is set explicitly. A prompt that does not fit is rejected
   instead of silently truncated, and the report shows the token usage of each
   investigation.
 - **Graceful degradation.** Each LLM call is retried once, because local GPUs
@@ -283,11 +284,8 @@ src/
   k8s/client.ts         Read-only Kubernetes client
   k8s/raw.ts            GET-only reader for /readyz, /livez, /version and /metrics
   k8s/errors.ts         Kubernetes API error helpers
-  llm/model.ts          LlmClient interface, Ollama implementation, token usage
-  llm/ollama.ts         Ollama connection check
   tools/k8s-tools.ts    The eight read-only tools
   tools/format.ts       Compact text for pods, nodes and events in tool output
-  tools/truncate.ts     Output truncation
   scan/scan.ts          Cluster overview: lists everything in parallel
   scan/collect-cluster.ts  Control plane, etcd, leader leases, node usage, webhooks, DNS,
                         aggregated APIs and terminating namespaces
@@ -359,28 +357,38 @@ change them:
 
 | Variable | Default | Description |
 | --- | --- | --- |
-| `OLLAMA_URL` | `http://localhost:11434` | Ollama server URL |
-| `MODEL` | `qwen2.5:7b-instruct` | Model used for triage and investigation |
+| `LLM_PROVIDER` | `ollama` | `ollama`, `anthropic` or `openai`. Hosted providers send cluster data to that API |
+| `LLM_MODEL` | `qwen2.5:7b-instruct` | Model used for triage and investigation (hosted providers have their own default) |
+| `OLLAMA_HOST` | `http://localhost:11434` | Ollama server address (`host:port` or a full URL) |
+| `ANTHROPIC_API_KEY` / `OPENAI_API_KEY` | | API key for a hosted provider |
 | `KUBECONFIG` | _(empty)_ | Kubeconfig path, or several separated by `:` (merged like kubectl); empty uses `$KUBECONFIG` or `~/.kube/config` |
 | `MAX_PROBLEMS` | `5` | Max problems the LLM investigates per run |
 | `MAX_STEPS_PER_PROBLEM` | `6` | Max tool calls per investigated problem |
-| `NUM_CTX` | `16384` | Ollama context window in tokens (see below) |
+| `LLM_NUM_CTX` | `16384` | Ollama context window in tokens (see below) |
+| `LLM_TIMEOUT_MS` | `180000` | Timeout of each LLM request |
+| `LLM_MAX_OUTPUT_TOKENS` | `4096` | Cap on each LLM answer |
 | `TOOL_OUTPUT_MAX_CHARS` | `4000` | Tool output is truncated to this before reaching the LLM |
 | `RESTART_THRESHOLD` | `5` | Containers restarting at least this often are flagged |
 | `EVENT_WINDOW_MINUTES` | `60` | Only warning events newer than this are included |
 
 Invalid values stop the run at startup with an error that names the variable.
 
-`NUM_CTX` matters: Ollama's default context window is small, and by default Ollama
+The LLM settings (`LLM_*`, `OLLAMA_HOST`) are shared with
+[iac-pr-reviewer](https://github.com/meirakrish/iac-pr-reviewer) through
+[llm-kit](https://github.com/meirakrish/llm-kit), which provides the model setup, retries,
+timeouts and token metering. The old names `OLLAMA_URL`, `MODEL` and `NUM_CTX` still work
+but print a deprecation warning.
+
+`LLM_NUM_CTX` matters: Ollama's default context window is small, and by default Ollama
 **silently truncates** longer prompts, so the model loses the start of the conversation
 without any error. The agent asks Ollama to reject such prompts instead
-(`truncate: false`); that investigation then fails with a message to raise `NUM_CTX`,
+(`truncate: false`); that investigation then fails with a message to raise `LLM_NUM_CTX`,
 and the report falls back to the rule-based evidence. 16384 tokens fits a 7B model in
 about 6 GB of VRAM.
 
 To tune it, check the token usage in the report: each investigated problem shows its
 prompt and output tokens and its largest prompt, and "Scan notes" shows the total. The
-report warns when a prompt used 80% or more of `NUM_CTX`.
+report warns when a prompt used 80% or more of `LLM_NUM_CTX`.
 
 ## Usage
 
@@ -614,6 +622,11 @@ object counts will show as "Not checked". To allow them, also grant `get` on the
 non-resource URL `/metrics`. Env var values are never sent to the model, but logs and event messages are,
 so treat reports as containing cluster data.
 
+**Where cluster data goes.** With the default Ollama provider, prompts (including logs and
+event messages) never leave your machine. Setting `LLM_PROVIDER=anthropic` or `openai`
+sends them to that provider's API. That choice is always explicit: an API key present in
+the environment does not switch providers on its own.
+
 ## Limitations
 
 - **A 7B model makes mistakes.** In testing, it found the right root cause for each demo
@@ -630,7 +643,7 @@ so treat reports as containing cluster data.
 - **Value checks are literal.** A suggested `500m` or `128Mi` is marked unverified even
   when it is a sensible choice, because it is the model's number, not the cluster's. A
   value that happens to appear elsewhere in the data is not marked.
-- **A larger model helps.** Setting `MODEL=qwen2.5:14b-instruct` (or another
+- **A larger model helps.** Setting `LLM_MODEL=qwen2.5:14b-instruct` (or another
   tool-calling model) should improve the fixes, at the cost of speed and VRAM.
 - **Coverage:** the rules cover the control plane and its components (including leader
   election), etcd, nodes, admission webhooks, aggregated APIs, stuck namespaces, pods,
@@ -670,7 +683,7 @@ The end-to-end tests run the real scan and CLI against the demo cluster.
 - **`Ignored build scripts: esbuild`:** pnpm 10+ blocks dependency install scripts by
   default. This repo allows `esbuild` in `pnpm-workspace.yaml`. Run `pnpm install` again.
 - **`cannot reach Ollama` in the report:** start Ollama (`ollama serve`, or the system
-  service), or set `OLLAMA_URL`. The rule-based report is still produced.
+  service), or set `OLLAMA_HOST`. The rule-based report is still produced.
 - **`kind create cluster` fails with `connection refused` on port 6443:** the API server
   could not start, usually because of the Linux inotify limit when other clusters (for
   example, minikube) are running too. `pnpm demo:up` warns about this. Raise the limit

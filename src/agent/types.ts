@@ -1,4 +1,4 @@
-import type { LlmUsage } from "../llm/model.js";
+import type { LlmUsage } from "@meirakrish/llm-kit";
 import type { Issue, Severity } from "../scan/types.js";
 
 /** A problem chosen by triage: one primary issue plus issues sharing its root cause. */

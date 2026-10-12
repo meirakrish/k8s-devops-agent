@@ -22,7 +22,7 @@ import { apiServiceGroupVersion } from "../scan/cluster-rules.js";
 import { formatBytes } from "../scan/quantity.js";
 import type { ApiHealthSummary, EventSummary, PodSummary } from "../scan/types.js";
 import { describePodText, eventLine, jobLine, leaseLine, nodeLine, podLine, type ClaimInfo } from "./format.js";
-import { truncateMiddle } from "./truncate.js";
+import { truncateMiddle } from "@meirakrish/llm-kit";
 
 /**
  * The agent's tools. All are read-only: they only receive the read-only client.
