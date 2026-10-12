@@ -1,5 +1,5 @@
 {
-  "name": "local-devops-agent",
+  "name": "k8s-devops-agent",
   "version": "0.1.0",
   "private": true,
   "type": "module",
