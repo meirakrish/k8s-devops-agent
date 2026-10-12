@@ -14,7 +14,7 @@
     "url": "https://github.com/meirakrish/k8s-devops-agent/issues"
   },
   "engines": {
-    "node": ">=20.11"
+    "node": ">=22.19"
   },
   "scripts": {
     "check": "tsx src/cli.ts",
