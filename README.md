@@ -1,4 +1,4 @@
-# local-devops-agent
+# k8s-devops-agent
 
 A local AI agent that runs a full, read-only health check on a Kubernetes cluster. On
 each run it scans the cluster, decides what to dig into, investigates each problem with
@@ -323,7 +323,7 @@ docs/                   Example report
 
 ### 1. Install Ollama and the model
 
-On Linux and WSL, the Ollama install script needs `zstd`, which a fresh Ubuntu does not
+On Linux, the Ollama install script needs `zstd`, which a fresh Ubuntu does not
 include:
 
 ```bash
@@ -421,7 +421,7 @@ that checks the cluster every hour, keeps a timestamped markdown report, and com
 run with the previous one through `reports/latest.json`:
 
 ```cron
-0 * * * * cd /path/to/local-devops-agent && mkdir -p reports && pnpm -s check --compare reports/latest.json --output reports/latest.json --output "reports/$(date +\%F-\%H).md" > /dev/null 2>> reports/cron.log || logger "cluster check failed or found critical issues"
+0 * * * * cd /path/to/k8s-devops-agent && mkdir -p reports && pnpm -s check --compare reports/latest.json --output reports/latest.json --output "reports/$(date +\%F-\%H).md" > /dev/null 2>> reports/cron.log || logger "cluster check failed or found critical issues"
 ```
 
 `--compare` reads the previous report before `--output` overwrites it, so one file is
@@ -440,7 +440,7 @@ to compare with (the first run, or a report of another context), every critical 
 counts as new, so an outage is never hidden:
 
 ```cron
-0 * * * * cd /path/to/local-devops-agent && mkdir -p reports && pnpm -s check --fail-on new --compare reports/latest.json --output reports/latest.json --output "reports/$(date +\%F-\%H).md" > /dev/null 2>> reports/cron.log || logger "cluster check failed or found new critical issues"
+0 * * * * cd /path/to/k8s-devops-agent && mkdir -p reports && pnpm -s check --fail-on new --compare reports/latest.json --output reports/latest.json --output "reports/$(date +\%F-\%H).md" > /dev/null 2>> reports/cron.log || logger "cluster check failed or found new critical issues"
 ```
 
 To check several clusters, list their contexts with `--context`. They run one after
@@ -667,9 +667,6 @@ The end-to-end tests run the real scan and CLI against the demo cluster.
 
 ### Troubleshooting
 
-- **`corepack: /bin/sh^M: bad interpreter` (WSL):** the Windows Node install is ahead of
-  the Linux one on your `PATH`. Install Node inside WSL (for example, with
-  [nvm](https://github.com/nvm-sh/nvm)) and make sure its `bin` directory comes first.
 - **`Ignored build scripts: esbuild`:** pnpm 10+ blocks dependency install scripts by
   default. This repo allows `esbuild` in `pnpm-workspace.yaml`. Run `pnpm install` again.
 - **`cannot reach Ollama` in the report:** start Ollama (`ollama serve`, or the system
