@@ -176,8 +176,8 @@ importers:
         specifier: ^1.4.21
         version: 1.4.21(@langchain/core@1.2.17(ws@8.22.0))(zod@4.6.5)
       '@meirakrish/llm-kit':
-        specifier: https://github.com/meirakrish/llm-kit/releases/download/v0.1.0/meirakrish-llm-kit-0.1.0.tgz
-        version: https://github.com/meirakrish/llm-kit/releases/download/v0.1.0/meirakrish-llm-kit-0.1.0.tgz(@langchain/core@1.2.17(ws@8.22.0))(zod@4.6.5)
+        specifier: ^0.1.1
+        version: 0.1.1(@langchain/core@1.2.17(ws@8.22.0))(zod@4.6.5)
       dotenv:
         specifier: ^18.0.6
         version: 18.0.6
@@ -425,9 +425,8 @@ packages:
   '@langchain/protocol@0.0.19':
     resolution: {integrity: sha512-9hKcRrH7cBX6gfutdfXPoft1OCchHe4FEpALoDJMl5Qu+n/YG5ynZmyu8+8cxORlPwHBoKTxggvXz+76M1yX1Q==}
 
-  '@meirakrish/llm-kit@https://github.com/meirakrish/llm-kit/releases/download/v0.1.0/meirakrish-llm-kit-0.1.0.tgz':
-    resolution: {integrity: sha512-DYA5ZIhiFYoVLoMqWaMVsP72MlStxhDOfsaBkWiw5DAZdtUXLPtJaVUV+aBom1qSO3tTC/D78IL+FV1Uyjtdpw==, tarball: https://github.com/meirakrish/llm-kit/releases/download/v0.1.0/meirakrish-llm-kit-0.1.0.tgz}
-    version: 0.1.0
+  '@meirakrish/llm-kit@0.1.1':
+    resolution: {integrity: sha512-fpT5Qa3UJCmgZNL9ZbCUtyelO/fzrE6T4kPryPnJAZHa4dXiN05LEBWJAHCL+3sckjo7DowNBqevnLzr9OvI/g==}
     engines: {node: '>=22.19'}
     peerDependencies:
       '@langchain/anthropic': ^1.5.0
@@ -1470,7 +1469,7 @@ snapshots:
 
   '@langchain/protocol@0.0.19': {}
 
-  '@meirakrish/llm-kit@https://github.com/meirakrish/llm-kit/releases/download/v0.1.0/meirakrish-llm-kit-0.1.0.tgz(@langchain/core@1.2.17(ws@8.22.0))(zod@4.6.5)':
+  '@meirakrish/llm-kit@0.1.1(@langchain/core@1.2.17(ws@8.22.0))(zod@4.6.5)':
     dependencies:
       '@langchain/core': 1.2.17(ws@8.22.0)
       '@langchain/ollama': 1.3.0(@langchain/core@1.2.17(ws@8.22.0))

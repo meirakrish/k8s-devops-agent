@@ -39,7 +39,13 @@ spec:
                 echo "FATAL: DATABASE_URL is not set, cannot connect to database" >&2
                 exit 1
               fi
+              touch /tmp/ready
               sleep 3600
+          # Without a probe the pods count as ready for a moment after each restart, so the
+          # web Service would sometimes have a ready endpoint.
+          readinessProbe:
+            exec: { command: ["cat", "/tmp/ready"] }
+            periodSeconds: 5
 ---
 # ImagePullBackOff: the image tag does not exist.
 apiVersion: apps/v1
