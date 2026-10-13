@@ -681,7 +681,10 @@ the environment does not switch providers on its own.
 The unit tests feed the rules fake broken pods, nodes and deployments, run the tools
 against a fake cluster, and drive the investigate loop with a scripted fake LLM.
 [`test/rules.test.ts`](test/rules.test.ts) is a good place to see what each rule catches.
-The end-to-end tests run the real scan and CLI against the demo cluster.
+The end-to-end tests run the real scan and CLI against the demo cluster. Some rules (the
+PVC, volume-mount and Service ones) wait out a 5-minute grace period so that pods that are
+still starting are not flagged, so on a fresh cluster wait until the workloads are 5
+minutes old before running `pnpm test:e2e`; earlier, those tests fail.
 
 CI ([`.github/workflows/ci.yml`](.github/workflows/ci.yml)) runs the type check, format
 check, unit tests and build on every push and pull request, the same workflow as
