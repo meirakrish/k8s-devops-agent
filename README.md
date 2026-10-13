@@ -9,6 +9,10 @@ Everything runs on your machine. By default the LLM is served by [Ollama](https:
 so no cloud LLM APIs are used and no cluster data leaves your machine. Anthropic and OpenAI
 can be used instead, but only when chosen explicitly with `LLM_PROVIDER`.
 
+It shares its LLM layer, severity scale and settings with
+[iac-pr-reviewer](https://github.com/meirakrish/iac-pr-reviewer) through
+[llm-kit](https://github.com/meirakrish/llm-kit).
+
 ```text
 $ pnpm demo:check --verbose
 [12:51:39] scan: 2 nodes, 18 pods, 7 deployments, 11 warning events, 12 issues
@@ -84,13 +88,18 @@ flowchart LR
     cli["pnpm check<br/>(cli.ts)"] --> lg["LangGraph agent<br/>(graph.ts)"]
     lg --> guard["Read-only client<br/>(k8s/client.ts, raw.ts)<br/>list* / read* objects,<br/>GET /readyz /version /metrics"]
     guard -->|"HTTPS, your kubeconfig"| k8s[("Kubernetes API")]
-    lg -->|"localhost:11434"| ollama["Ollama<br/>qwen2.5:7b-instruct"]
+    lg --> kit["llm-kit<br/>LlmClient"]
+    kit -->|"localhost:11434 (default)"| ollama["Ollama<br/>qwen2.5:7b-instruct"]
+    kit -.->|"only with LLM_PROVIDER"| hosted["Anthropic / OpenAI API"]
     lg --> report["Markdown report<br/>stdout / --output"]
     lg --> exitcode["Exit code<br/>0 / 1 / 2"]
 ```
 
 The agent talks to two things: the Kubernetes API, only through a client that cannot
-write, and a local Ollama server. Nothing else leaves the machine.
+write, and an LLM through [llm-kit](https://github.com/meirakrish/llm-kit), which handles
+timeouts, retries, schema validation and token counting. By default that LLM is a local
+Ollama server and nothing else leaves the machine. A hosted provider is used only when
+`LLM_PROVIDER` names it.
 
 ### Agent flow
 
@@ -117,7 +126,7 @@ flowchart TD
 | Step | Uses the LLM | What it does |
 | --- | --- | --- |
 | **scan** | no | Lists nodes, pods, workloads, Services, recent warning events, webhooks and control-plane health in parallel, summarizes them, and runs the rules. A failed call is recorded and the scan continues. |
-| **checkLlm** | no | Checks that Ollama is reachable and the model is pulled. Runs in parallel with the scan. |
+| **checkLlm** | no | Checks that Ollama is reachable and the model is pulled (skipped for hosted providers). Runs in parallel with the scan. |
 | **triage** | yes | Picks up to `MAX_PROBLEMS` problems and merges issues with one root cause (for example, a Deployment and its crashing pods). |
 | **investigate** | yes | For each problem, a tool-calling loop of at most `MAX_STEPS_PER_PROBLEM` calls, then a structured conclusion. |
 | **report** | no | Investigated problems first, then the remaining rule-based issues, recent warning events and notes. |
@@ -269,9 +278,11 @@ several failure modes, and each fix moved responsibility from the prompt into co
   context window (`LLM_NUM_CTX`) is set explicitly. A prompt that does not fit is rejected
   instead of silently truncated, and the report shows the token usage of each
   investigation.
-- **Graceful degradation.** Each LLM call is retried once, because local GPUs
-  occasionally fail a single request. If Ollama is down, triage fails or one
-  investigation fails, the report falls back to the rule-based findings for that part.
+- **Graceful degradation.** A failed LLM call is retried once, because local GPUs
+  occasionally fail a single request; a prompt that doesn't fit, a timeout
+  (`LLM_TIMEOUT_MS`) or an unreachable server is not retried, since it would fail the same
+  way. If Ollama is down, triage fails or one investigation fails, the report falls back
+  to the rule-based findings for that part.
 
 ### Project layout
 
